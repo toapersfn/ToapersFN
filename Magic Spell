@@ -1,0 +1,65 @@
+using { /Fortnite.com/Characters }
+using { /Fortnite.com/Devices }
+using { /Verse.org/Simulation }
+using { /UnrealEngine.com/Temporary/Diagnostics }
+
+custom_player := class<concrete>():
+    @editable var VFXSpawner : vfx_spawner_device = vfx_spawner_device{}
+    @editable var DamageDevice : damage_volume_device = damage_volume_device{}
+    @editable var DeviceMover : creative_prop = creative_prop{}
+    @editable var InputTrigger : input_trigger_device = input_trigger_device{}
+    @editable var SFXPlayer : audio_player_device = audio_player_device{}
+    
+    var Player : ?player = false
+    var SpellDuration : float = 1.0 # Determines how long the spell will last
+
+    Init(IPlayer : player):void=
+        VFXSpawner.Disable()
+        DamageDevice.Disable()
+        InputTrigger.PressedEvent.Subscribe(OnInputTriggerActivated)
+
+        if (Agent := agent[IPlayer], FortChar := Agent.GetFortCharacter[]):
+            set Player = option{IPlayer}
+            spawn:
+                MoveDevices(FortChar)
+
+    # Keep the devices at player location at all times
+    MoveDevices(FortChar : fort_character)<suspends>:void=
+        loop:
+            Sleep(0.0)
+            if (DeviceMover.TeleportTo[FortChar.GetTransform().Translation, FortChar.GetTransform().Rotation]) {} # Moves BP to player 
+
+    # Spawns the use spell function when the input trigger is activated
+    OnInputTriggerActivated(Agent : agent):void=
+        if (IsAgentSameAsPlayer(Agent)?): # Checks if the agent activating the spell is the same as the player
+            spawn:
+                UseSpell()
+
+    UseSpell()<suspends>:void=
+        VFXSpawner.Enable()
+        if (Agent := agent[Player?]) {SFXPlayer.Play(Agent)}
+        if (Agent := agent[Player?], FortChar := Agent.GetFortCharacter[]) {FortChar.SetVulnerability(false)}
+        DamageDevice.Enable()
+        Sleep(SpellDuration)
+        if (Agent := agent[Player?], FortChar := Agent.GetFortCharacter[]) {FortChar.SetVulnerability(true)}
+        DamageDevice.Disable()
+        VFXSpawner.Disable()
+
+    IsAgentSameAsPlayer(Incoming : agent)<transacts>:logic=
+        if (IPlayer := player[Incoming]):
+            if (Player? = IPlayer) { return true }
+            else { return false }
+        
+        return false
+
+# A Verse-authored creative device that can be placed in a level
+magic_spell := class(creative_device):
+
+    @editable var CustomPlayers : []custom_player = array{}
+
+    # Runs when the device is started in a running game
+    OnBegin<override>()<suspends>:void=
+        AllPlayers := GetPlayspace().GetPlayers()
+        for (IDX := 0..AllPlayers.Length - 1):
+            if (CustomPlayer := CustomPlayers[IDX], Player := AllPlayers[IDX]):
+                CustomPlayer.Init(Player)
