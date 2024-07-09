@@ -1,0 +1,62 @@
+using { /Fortnite.com/Devices }
+using { /Verse.org/Simulation }
+using { /UnrealEngine.com/Temporary/Diagnostics }
+using { /Fortnite.com/Characters }
+using { /UnrealEngine.com/Temporary/SpatialMath }
+
+building_system := class(creative_device):
+
+    @editable LuckyBlockPreview : creative_prop = creative_prop{}
+    @editable LuckyBlockPlacement : creative_prop_asset = DefaultCreativePropAsset
+    @editable CheckItem : conditional_button_device = conditional_button_device{}
+    @editable Remote : signal_remote_manager_device = signal_remote_manager_device{}
+    var InitialTransform : transform = transform{}
+    var CurrentTransform : transform = transform{}
+
+    OnBegin<override>()<suspends>:void=
+        set InitialTransform = LuckyBlockPreview.GetTransform()
+        Remote.PrimarySignalEvent.Subscribe(Place)
+        for (P : GetPlayspace().GetPlayers()):
+            spawn:
+                CheckForItem(P)
+        
+    Place(Agent : agent) : void =
+        SpawnProp(LuckyBlockPlacement, CurrentTransform.Translation, IdentityRotation())
+        
+    CheckForItem(Agent : agent)<suspends> : void =
+        loop:
+            Sleep(0.0)
+            if:
+                CheckItem.IsHoldingItem[Agent]
+                FC := Agent.GetFortCharacter[]
+            then:
+                R := FC.GetViewRotation()
+                P := FC.GetTransform().Translation
+                Forward := R.GetLocalForward()
+                set CurrentTransform = transform{
+                    Scale := vector3 {X := 0.99, Y := 0.99, Z := 0.99}
+                    Rotation := IdentityRotation()
+                    Translation := P + (Forward * 250.0)
+                }
+
+                set CurrentTransform.Translation.X = NormalizeValue(CurrentTransform.Translation.X)
+                set CurrentTransform.Translation.Y = NormalizeValue(CurrentTransform.Translation.Y)
+                set CurrentTransform.Translation.Z = NormalizeValue(CurrentTransform.Translation.Z)
+
+                if (LuckyBlockPreview.TeleportTo[CurrentTransform]) {}
+            else:
+                if (LuckyBlockPreview.TeleportTo[InitialTransform]) {}
+
+    NormalizeValue(Value : float) : float =
+        if:
+            RoundedValue := Round[Value]
+            Remainder := Mod[RoundedValue, 100]
+        then:
+            if:
+                Remainder >= 50
+            then:
+                return (RoundedValue + (100 - Remainder)) * 1.0
+            else:
+                return (RoundedValue - Remainder) * 1.0
+
+        return -1.0
