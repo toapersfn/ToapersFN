@@ -130,9 +130,9 @@ boss_health_bar := class(creative_device):
     @editable CinematicDeath : cinematic_sequence_device = cinematic_sequence_device{}
     @editable EliminationManager : elimination_manager_device = elimination_manager_device{}
 
-    @editable var BowDamageAmount : float = 10.0
-    @editable var DualFiendDamageAmount : float = 50.0
-    @editable var HadesDamageAmount : float = 100.0
+    @editable var BowDamageAmount : float = 52.0
+    @editable var DualFiendDamageAmount : float = 31.0
+    @editable var HadesDamageAmount : float = 55.0
     @editable var BossName : string = "Velascos Epic Boss"
     @editable var BossHealth : float = 1000.0
 
