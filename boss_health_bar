@@ -1,0 +1,177 @@
+using { /Fortnite.com/Devices }
+using { /Fortnite.com/Characters }
+using { /Fortnite.com/Game }
+using { /Verse.org/Simulation }
+using { /Verse.org/Random }
+using { /UnrealEngine.com/Temporary/Diagnostics }
+using { /UnrealEngine.com/Temporary/UI }
+using { /Fortnite.com/UI }
+using { /UnrealEngine.com/Temporary/SpatialMath}
+using { /Verse.org/Colors }
+using { /Verse.org/Colors/NamedColors }
+
+health_bar := class():
+    var iTotalHP<private> : float = 1000.0
+    var iCurrentHP<private> : float = 1000.0
+    var iBossName<private> : string = "Velasco's Epic Boss"
+    
+    BossBarColorBase<private> : color_block = color_block{
+        DefaultColor := MakeColorFromHex("000000")
+        DefaultDesiredSize := vector2{X:= 1200.0, Y := 40.0}} 
+
+    BossBarBorder<private> : color_block = color_block{
+        DefaultColor := MakeColorFromHex("#000000")
+        DefaultDesiredSize := vector2{X:= 1210.0, Y := 50.0}
+        DefaultOpacity := 0.5}
+
+    var BossBarColorTop<private> : color_block = color_block{}
+    var BossBarColorMid<private> : color_block = color_block{}  
+    var Overlay<private> : overlay = overlay{}
+        
+    HPBarTitleTextBlock<private> : text_block = text_block{DefaultTextColor := MakeColorFromHex("FFFFFF")}
+
+    HPTitleText<private><localizes>(HPText : string) : message = "{HPText}"
+
+    Init(BossName : string, BossTotalHP: float):void=
+        set iBossName = BossName
+        set iTotalHP = BossTotalHP
+        set iCurrentHP = BossTotalHP
+        if (Current := Int[iCurrentHP], Total := Int[iTotalHP]):
+            HPBarTitleTextBlock.SetText(HPTitleText("{iBossName}: {Current}/{Total}"))
+
+    TakeDamage(DamageAmount : float):void=
+        set iCurrentHP -= DamageAmount
+        if (iCurrentHP < 0.0):
+            set iCurrentHP = 0.0
+ 
+        HealthPercentage := iCurrentHP / iTotalHP
+        BarSize := BossBarColorBase.GetDesiredSize()
+        NewHealthBarWidth := BarSize.X * HealthPercentage
+        if (Current := Int[iCurrentHP], Total := Int[iTotalHP]):
+            HPBarTitleTextBlock.SetText(HPTitleText("{iBossName}: {Current}/{Total}"))
+        
+        UpdateHealthBar(NewHealthBarWidth)
+
+    ShowUIForPlayer(Player : player):void=
+        if (PlayerUI := GetPlayerUI[Player]):
+            PlayerUI.AddWidget(CreateUI())
+
+    GetCurrentHP()<transacts>:float=
+        return iCurrentHP
+
+    UpdateHealthBar(NewWidth : float):void=
+        Overlay.RemoveWidget(HPBarTitleTextBlock)
+        Overlay.RemoveWidget(BossBarColorTop)
+        set BossBarColorTop = CreateTopHealthBar(NewWidth)
+
+        Overlay.AddWidget(CreateOverlaySlotHealth(BossBarColorTop, horizontal_alignment.Left))
+        Overlay.AddWidget(CreateOverlaySlotText(HPBarTitleTextBlock, horizontal_alignment.Center))
+        
+    CreateOverlaySlotHealth<private>(TheWidget : widget, HAlignment : horizontal_alignment):overlay_slot=  
+        overlay_slot:
+            Widget := TheWidget 
+            HorizontalAlignment := HAlignment
+            Padding := margin{Left:=5.0,Right:=0.0}
+
+    CreateOverlaySlotText<private>(TheWidget : widget, HAlignment : horizontal_alignment):overlay_slot=  
+        overlay_slot:
+            Widget := TheWidget 
+            HorizontalAlignment := HAlignment
+
+    CreateTopHealthBar<private>(Width: float):color_block=
+        ColorBlock := color_block{
+            DefaultColor := MakeColorFromHex("ff2a00")
+            DefaultDesiredSize := vector2{X:= Width, Y := 40.0}} 
+        
+        set BossBarColorTop = ColorBlock
+
+    CreateOverlay<private>() : overlay=
+        TheOverlay := overlay:
+            Slots := array:
+                overlay_slot:
+                    Widget := BossBarBorder
+                overlay_slot:
+                    Widget := BossBarColorBase
+                overlay_slot:
+                    Widget := CreateTopHealthBar(1200.0)
+                overlay_slot:
+                    Widget := HPBarTitleTextBlock
+        set Overlay = TheOverlay
+
+    CreateUI<private>() : canvas=
+        TheCanvas : canvas = canvas:
+            Slots := array:
+                canvas_slot:
+                    Anchors := anchors{Minimum := vector2{X := 0.5, Y := 0.0}, Maximum := vector2{X := 0.5, Y := 0.0}}
+                    Offsets := margin{Top := 100.0, Left := 0.0, Right := 0.0, Bottom := 0.0}
+                    Alignment := vector2{X := 0.5, Y := 1.0}
+                    Widget := stack_box:
+                        Orientation := orientation.Vertical
+                        Slots := array:
+                            stack_box_slot:
+                                Widget := CreateOverlay()
+                                                                
+        return TheCanvas        
+
+    RemoveHealthBar():void=
+        Overlay.RemoveWidget(HPBarTitleTextBlock)
+        Overlay.RemoveWidget(BossBarColorTop)
+        Overlay.RemoveWidget(BossBarColorBase)
+        Overlay.RemoveWidget(BossBarBorder)
+
+boss_health_bar := class(creative_device):
+
+    @editable PropManipulatorBoss : prop_manipulator_device = prop_manipulator_device{}
+    @editable BossAsset : creative_prop = creative_prop{}
+    @editable MutatorZoneBoss : mutator_zone_device = mutator_zone_device{}
+    @editable ConditionalButtonBow : conditional_button_device = conditional_button_device{}
+    @editable ConditionalButtonDualFiend : conditional_button_device = conditional_button_device{}
+    @editable ConditionalButtonHades : conditional_button_device = conditional_button_device{}
+    @editable CinematicDeath : cinematic_sequence_device = cinematic_sequence_device{}
+    @editable EliminationManager : elimination_manager_device = elimination_manager_device{}
+
+    @editable var BowDamageAmount : float = 10.0
+    @editable var DualFiendDamageAmount : float = 50.0
+    @editable var HadesDamageAmount : float = 100.0
+    @editable var BossName : string = "Velascos Epic Boss"
+    @editable var BossHealth : float = 1000.0
+
+    BossHPBar : health_bar = health_bar{}
+    
+    OnBegin<override>()<suspends>:void=
+        AllPlayers := GetPlayspace().GetPlayers()
+        MutatorZoneBoss.AgentEntersEvent.Subscribe(OnPlayerEnteringZone)
+        EliminationManager.EliminatedEvent.Subscribe(OnPlayerEliminated)
+        BossHPBar.Init(BossName, BossHealth)
+        PropManipulatorBoss.DamagedEvent.Subscribe(OnBossDamaged)
+
+    OnPlayerEnteringZone(Agent : agent):void=
+        if (Player := player[Agent]):
+            BossHPBar.ShowUIForPlayer(Player)
+        BossHPBar.TakeDamage(0.0)
+
+    OnBossDamaged(Agent : agent):void=
+        spawn { OnBossDamagedAction(Agent) }
+
+    OnBossDamagedAction(Agent : agent)<suspends>:void=
+        if (ConditionalButtonBow.IsHoldingItem[Agent]):
+            BossHPBar.TakeDamage(BowDamageAmount)
+        else if (ConditionalButtonDualFiend.IsHoldingItem[Agent]):
+            BossHPBar.TakeDamage(DualFiendDamageAmount)
+        else:
+            if (ConditionalButtonHades.IsHoldingItem[Agent]):
+                BossHPBar.TakeDamage(HadesDamageAmount)
+                
+        Sleep(0.01)
+        if (BossHPBar.GetCurrentHP() <= 0.0):
+            Print("Boss HP: {BossHPBar.GetCurrentHP()}")
+            spawn { OnBossDefeated() }
+
+    OnBossDefeated()<suspends>:void=
+        BossHPBar.RemoveHealthBar()
+        CinematicDeath.Play()
+        Sleep(5.0)
+        BossAsset.Dispose()
+
+    OnPlayerEliminated(Agent : agent):void=
+        BossHPBar.RemoveHealthBar()
