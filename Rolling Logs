@@ -1,0 +1,194 @@
+using { /Fortnite.com/Characters }
+using { /Fortnite.com/Devices }
+using { /Fortnite.com/Devices/CreativeAnimation }
+using { /Fortnite.com/Devices/CreativeAnimation/InterpolationTypes }
+using { /Verse.org/Simulation }
+using { /UnrealEngine.com/Temporary/Diagnostics }
+using { /UnrealEngine.com/Temporary/SpatialMath }
+
+rolling_log := class<concrete>():
+
+    @editable
+    CreativeProp : creative_prop = creative_prop {}
+
+rolling_logs := class(creative_device):
+
+    @editable
+    RollingLogs : []rolling_log = array{}
+
+    # Runs when the device is started in a running game
+    OnBegin<override>()<suspends>:void=
+        for(RollingLog : RollingLogs):
+            PlayAnim(RollingLog)
+            Sleep(2.0)
+        
+    PlayAnim(RollingLog : rolling_log):void=
+        if (AController := RollingLog.CreativeProp.GetAnimationController[]):
+            # Set up all of the rotations for the logs. Can't just do 360, need to do 4 separate 90 degree turns (or 2 separate 180 degree turns)
+            var InitialRoll : rotation = rotation{}
+            var MidRoll : rotation = rotation{}
+            var FinalRoll : rotation = rotation{}
+            var FinalRotation : rotation = rotation{}
+            var FinalRotationHalf : rotation = rotation{}
+            var ResetFinalRotation : rotation = rotation{}
+            # Used ApplyRoll here which uses Radians, but if you want to use degrees, you can use ApplyRoll(DegreesToRadians(6.0))
+            set InitialRoll = rotation{}.ApplyRoll(0.1)
+            set MidRoll = rotation{}.ApplyRoll(-0.2)
+            set FinalRoll = rotation{}.ApplyRoll(0.1)
+            set FinalRotation = rotation{}.ApplyPitch(3.14)
+            set FinalRotationHalf = rotation{}.ApplyPitch(1.57)
+            # Can probably just use -1.57 below, but this was my first time so I just added up all the rotations and put a negative 
+            set ResetFinalRotation = rotation{}.ApplyPitch(-20.41)
+
+            # Make an array of the keyframes
+            MovementKeyFrame: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, -1364 in the Z direction
+                DeltaLocation := vector3 { X:=0.0, Y:=0.0, Z:=-1364.0 }
+                # Rotate the object 0.1 radians about the X (Roll)
+                DeltaRotation := InitialRoll
+                # Do not change scale
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                # Animate over 1.0 seconds
+                Time := 1.0
+                # Use EaseIn interpolation
+                Interpolation := EaseIn
+                }
+
+            MovementKeyFrame2: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, 55 in the Z direction
+                DeltaLocation := vector3 { X:=0.0, Y:=0.0, Z:=55.0 }
+                # Rotate the object -0.2 radians about the X (Roll)
+                DeltaRotation := MidRoll
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                Time := 0.5
+                Interpolation := Ease
+                }
+
+            MovementKeyFrame3: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, -55 in the Y direction
+                DeltaLocation := vector3 { X:=0.0, Y:=0.0, Z:=-55.0 }
+                # Rotate the object 0.1 radians about the X (Roll)
+                DeltaRotation := FinalRoll
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                Time := 0.5
+                Interpolation := EaseOut
+                }
+
+            MovementKeyFrame4: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, 2476.3 in the Y direction and -936.5 in the Z direction
+                DeltaLocation := vector3 { X:=0.0, Y:=2476.3, Z:=-936.5 }
+                # Rotate the object 3.14 radians about the Y (Pitch)
+                DeltaRotation := FinalRotation
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                Time := 1.2
+                Interpolation := Linear
+                }
+
+            MovementKeyFrame5: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, 2476.3 in the Y direction and -936.5 in the Z direction
+                DeltaLocation := vector3 { X:=0.0, Y:=2476.3, Z:=-936.5 }
+                # Rotate the object 3.14 radians about the Y (Pitch)
+                DeltaRotation := FinalRotation
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                Time := 1.2
+                Interpolation := Linear
+                }
+
+            MovementKeyFrame6: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, 2476.3 in the Y direction and -936.5 in the Z direction
+                DeltaLocation := vector3 { X:=0.0, Y:=2476.3, Z:=-936.5 }
+                # Rotate the object 3.14 radians about the Y (Pitch)
+                DeltaRotation := FinalRotation
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                Time := 1.2
+                Interpolation := Linear
+                }
+
+            MovementKeyFrame7: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, 2476.3 in the Y direction and -936.5 in the Z direction
+                DeltaLocation := vector3 { X:=0.0, Y:=2476.3, Z:=-936.5 }
+                # Rotate the object 3.14 radians about the Y (Pitch)
+                DeltaRotation := FinalRotation
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                Time := 1.21
+                Interpolation := Linear
+                }
+
+            MovementKeyFrame8: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, 2476.3 in the Y direction and -936.5 in the Z direction
+                DeltaLocation := vector3 { X:=0.0, Y:=2476.3, Z:=-936.5 }
+                # Rotate the object 3.14 radians about the Y (Pitch)
+                DeltaRotation := FinalRotation
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                Time := 1.21
+                Interpolation := Linear
+                }
+
+            MovementKeyFrame9: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, 2476.3 in the Y direction and -936.5 in the Z direction
+                DeltaLocation := vector3 { X:=0.0, Y:=2476.3, Z:=-936.5 }
+                # Rotate the object 3.14 radians about the Y (Pitch)
+                DeltaRotation := FinalRotation
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                Time := 1.21
+                Interpolation := Linear
+                }
+
+            MovementKeyFrame10: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, 1238.2 in the Y direction and -468.0 in the Z direction
+                DeltaLocation := vector3 { X:=0.0, Y:=1238.2, Z:=-468.0 }
+                # Rotate the object 1.57 radians about the Y (Pitch)
+                DeltaRotation := FinalRotationHalf
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                Time := 0.75
+                Interpolation := Linear
+                }
+
+            MovementKeyFrame11: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, -340.0 in the Z direction
+                DeltaLocation := vector3 { X:=0.0, Y:=0.0, Z:=-340.0 }
+                # Do not rotate object
+                DeltaRotation := rotation{}
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                Time := 0.0
+                Interpolation := Linear
+                }
+
+            MovementKeyFrame12: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, -16096.0 in the Y direction
+                DeltaLocation := vector3 { X:=0.0, Y:=-16096.0, Z:=0.0 }
+                DeltaRotation := rotation{}
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                Time := 0.01
+                Interpolation := Linear
+                }
+
+            MovementKeyFrame13: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, 7791.0 in the Z direction
+                DeltaLocation := vector3 { X:=0.0, Y:=0.0, Z:=7791.0 }
+                # Rotate the object -20.41 radians about the Y (Pitch)
+                DeltaRotation := ResetFinalRotation
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                Time := 0.01
+                Interpolation := Linear
+                }
+
+                # Select which keyframes to use
+                FortVaderKeyFrames:[]keyframe_delta = array { MovementKeyFrame, MovementKeyFrame2, MovementKeyFrame3, MovementKeyFrame4, MovementKeyFrame5, MovementKeyFrame6, MovementKeyFrame7, MovementKeyFrame8, MovementKeyFrame9, MovementKeyFrame10, MovementKeyFrame11, MovementKeyFrame12, MovementKeyFrame13 }
+                # Set the animation to play
+                AController.SetAnimation(FortVaderKeyFrames, ?Mode:=animation_mode.Loop)
+                # Play the animation
+                AController.Play()
