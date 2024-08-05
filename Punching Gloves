@@ -1,0 +1,114 @@
+using { /Fortnite.com/Characters }
+using { /Fortnite.com/Devices }
+using { /Fortnite.com/Devices/CreativeAnimation }
+using { /Fortnite.com/Devices/CreativeAnimation/InterpolationTypes }
+using { /Verse.org/Simulation }
+using { /UnrealEngine.com/Temporary/Diagnostics }
+using { /UnrealEngine.com/Temporary/SpatialMath }
+
+punching_glove_left := class<concrete>():
+
+    @editable
+    CreativeProp : creative_prop = creative_prop {}
+
+punching_glove_right := class<concrete>():
+
+    @editable
+    CreativeProp : creative_prop = creative_prop {}
+
+punching_gloves := class(creative_device):
+
+    @editable
+    PunchingGlovesLeft : []punching_glove_left = array{}
+
+    @editable
+    PunchingGlovesRight : []punching_glove_right = array{}
+
+
+    # Runs when the device is started in a running game
+    OnBegin<override>()<suspends>:void=
+        for(PunchingGloveLeft : PunchingGlovesLeft):
+            PlayAnimLeft(PunchingGloveLeft)
+            Sleep(0.75)
+        for(PunchingGloveRight : PunchingGlovesRight):
+            PlayAnimRight(PunchingGloveRight)
+            Sleep(0.75)
+
+    PlayAnimLeft(PunchingGloveLeft : punching_glove_left):void=
+        if (AController := PunchingGloveLeft.CreativeProp.GetAnimationController[]):
+            # Make an array of the keyframes
+            MovementKeyFrameStart: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, 240 in the Y direction
+                DeltaLocation := vector3 { X:=0.0, Y:=450.0, Z:=0.0 }
+                # Do not rotate the object
+                DeltaRotation := rotation{}
+                # Do not change scale
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                # Animate over 0.25 seconds
+                Time := 0.25
+                # Use Linear interpolation
+                Interpolation := Linear
+                }
+
+            MovementKeyFrameEnd: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, -450 in the Y direction (Get object back to starting position) Object must be back at the starting location/rotation for the Loop to work
+                DeltaLocation := vector3 { X:=0.0, Y:=-450.0, Z:=0.0 }
+                DeltaRotation := rotation{}
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                Time := 0.75
+                # Use EaseOut interpolation
+                Interpolation := EaseOut
+                }
+
+            # This key frame just pauses the object so there is delay between when it punches 
+            MovementKeyFramePause: keyframe_delta = keyframe_delta
+            {
+                DeltaLocation := vector3 { X:=0.0, Y:=0.0, Z:=0.0 }
+                DeltaRotation := rotation{}
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                Time := 1.5
+                Interpolation := EaseOut
+                }
+
+                # Set which keyframes to use
+                FortVaderKeyFrames:[]keyframe_delta = array { MovementKeyFrameStart, MovementKeyFrameEnd, MovementKeyFramePause }
+                # Set the animation to play
+                AController.SetAnimation(FortVaderKeyFrames, ?Mode:=animation_mode.Loop)
+                # Play the animation
+                AController.Play()
+
+    # Needed a second function for the objects on the right side since they move -450 in the Y direction to start
+    PlayAnimRight(PunchingGloveRight : punching_glove_right):void=
+        if (AController := PunchingGloveRight.CreativeProp.GetAnimationController[]):
+            MovementKeyFrameStart: keyframe_delta = keyframe_delta
+            {
+                DeltaLocation := vector3 { X:=0.0, Y:=-450.0, Z:=0.0 }
+                DeltaRotation := rotation{}
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                Time := 0.25
+                Interpolation := Linear
+                }
+
+            MovementKeyFrameEnd: keyframe_delta = keyframe_delta
+            {
+                DeltaLocation := vector3 { X:=0.0, Y:=450.0, Z:=0.0 }
+                DeltaRotation := rotation{}
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                Time := 0.75
+                Interpolation := EaseOut
+                }
+
+            MovementKeyFramePause: keyframe_delta = keyframe_delta
+            {
+                DeltaLocation := vector3 { X:=0.0, Y:=0.0, Z:=0.0 }
+                DeltaRotation := rotation{}
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                Time := 1.5
+                Interpolation := EaseOut
+                }
+
+                FortVaderKeyFrames:[]keyframe_delta = array { MovementKeyFrameStart, MovementKeyFrameEnd, MovementKeyFramePause }
+                AController.SetAnimation(FortVaderKeyFrames, ?Mode:=animation_mode.Loop)
+                AController.Play()
