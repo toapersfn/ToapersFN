@@ -1,0 +1,84 @@
+using { /Fortnite.com/Characters }
+using { /Fortnite.com/Devices }
+using { /Fortnite.com/Devices/CreativeAnimation }
+using { /Fortnite.com/Devices/CreativeAnimation/InterpolationTypes }
+using { /Verse.org/Simulation }
+using { /UnrealEngine.com/Temporary/Diagnostics }
+using { /UnrealEngine.com/Temporary/SpatialMath }
+
+scythe := class<concrete>():
+
+    @editable
+    CreativeProp : creative_prop = creative_prop {}
+
+scythes := class(creative_device):
+
+    @editable
+    Scythes : []scythe = array{}
+
+    # Runs when the device is started in a running game
+    OnBegin<override>()<suspends>:void=
+        for(Scythe : Scythes):
+            PlayAnim(Scythe)
+            Sleep(2.0)
+
+    PlayAnim(Scythe : scythe):void=
+        if (AController := Scythe.CreativeProp.GetAnimationController[]):
+            # Make an array of the keyframes
+            var StartRotation : rotation = rotation{}
+            var EndRotation : rotation = rotation{}
+            set StartRotation = rotation{}.ApplyPitch(DegreesToRadians(55.0))
+            set EndRotation = rotation{}.ApplyPitch(DegreesToRadians(-55.0))
+
+            # Make an array of the keyframes
+            MovementKeyFrameStart: keyframe_delta = keyframe_delta
+            {
+                # Used to move  prop in a direction (not needed for this )
+                DeltaLocation := vector3 { X:=0.0, Y:=0.0, Z:=0.0 }
+                # Rotate the object 55 degrees about the Y (Pitch)
+                DeltaRotation := StartRotation
+                # Do not change scale
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                # Animate over 1.0 seconds
+                Time := 1.0
+                # Use EaseOut interpolation
+                Interpolation := EaseOut
+                }
+
+            MovementKeyFrameStartMid: keyframe_delta = keyframe_delta
+            {
+                DeltaLocation := vector3 { X:=0.0, Y:=0.0, Z:=0.0 }
+                # Rotate the object 55 degrees about the Y (Pitch) again
+                DeltaRotation := StartRotation
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                Time := 1.0
+                # Use Linear interpolation
+                Interpolation := Linear
+                }
+
+            MovementKeyFrameEnd: keyframe_delta = keyframe_delta
+            {
+                DeltaLocation := vector3 { X:=0.0, Y:=0.0, Z:=0.0 }
+                # Rotate the object -55 degrees about the Y (Pitch)
+                DeltaRotation := EndRotation
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                Time := 1.0
+                Interpolation := EaseOut
+                }
+
+            MovementKeyFrameEndMid: keyframe_delta = keyframe_delta
+            {
+                DeltaLocation := vector3 { X:=0.0, Y:=0.0, Z:=0.0 }
+                # Rotate the object -55 degrees about the Y (Pitch) to get the object back to the starting rotation
+                DeltaRotation := EndRotation
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                Time := 1.0
+                Interpolation := Linear
+                }
+
+                # Set which keyframes to use
+                FortVaderKeyFrames:[]keyframe_delta = array { MovementKeyFrameStart, MovementKeyFrameEndMid, MovementKeyFrameEnd, MovementKeyFrameStartMid }
+                # Set the animation to play, then set mode (OneShot, Loop, PingPong)
+                AController.SetAnimation(FortVaderKeyFrames, ?Mode:=animation_mode.Loop)
+                # Play the animation
+                AController.Play()
