@@ -1,0 +1,194 @@
+using { /Fortnite.com/Characters }
+using { /Fortnite.com/Devices }
+using { /Fortnite.com/Devices/CreativeAnimation }
+using { /Fortnite.com/Game }
+using { /Fortnite.com/UI }
+using { /Fortnite.com/FortPlayerUtilities }
+using { /Verse.org/Assets }
+using { /Verse.org/Colors }
+using { /Verse.org/Colors/NamedColors }
+using { /Verse.org/Random }
+using { /Verse.org/Simulation }
+using { /Verse.org/Simulation/Tags }
+using { /UnrealEngine.com/Temporary/SpatialMath }
+using { /UnrealEngine.com/Temporary/UI }
+using { /UnrealEngine.com/Temporary/Diagnostics }
+
+spawner := class(tag){}
+
+game_manager := class(creative_device):
+
+    @editable PlayerCheckpoints : []player_checkpoint_device = array{}
+    @editable CollectibleCoins : []collectible_object_device = array{}
+    @editable MutatorZonesRespawn : []mutator_zone_device = array{}
+    @editable MutatorZonesRespawnHammer : []mutator_zone_device = array{}
+    @editable SwitchDevicesRespawn : []switch_device = array{}
+    @editable TeleportersRespawn : []teleporter_device = array{}
+    @editable TimerGameStart : timer_device = timer_device{}
+    @editable MutatorZoneTimerStart : mutator_zone_device = mutator_zone_device{}
+    @editable MutatorZonePreGameArea : mutator_zone_device = mutator_zone_device{}
+    @editable MutatorZoneEndArea : mutator_zone_device = mutator_zone_device{}
+    @editable AccoladesLevelCompleted : accolades_device = accolades_device{}
+    @editable AccoladesParkourCompleted : accolades_device = accolades_device{}
+    @editable TeleporterEndArea : teleporter_device = teleporter_device{}
+    @editable VFXSpawnersEndGame : []vfx_spawner_device = array{}
+    @editable TrackersLevelsBeaten : []tracker_device = array{}
+    @editable TrackersMapBeaten : []tracker_device = array{}
+    @editable AudioPlayerFall : audio_player_device = audio_player_device{}
+    @editable AudioPlayerBonk : audio_player_device = audio_player_device{}
+    @editable AudioPlayerSecretFound : audio_player_device = audio_player_device{}
+    @editable AudioPlayerParkourFinished : audio_player_device = audio_player_device{}
+    @editable ButtonDevicesSecret : []button_device = array{}
+    @editable HudDeviceFalls : hud_message_device = hud_message_device{}
+    @editable TrackerFalls : tracker_device = tracker_device{}
+
+    S2M<localizes>(String : string) : message = "{String}"
+
+    var CustomPlayers : [player]custom_player = map{}
+
+    OnBegin<override>()<suspends>:void=
+        GetPlayspace().PlayerRemovedEvent().Subscribe(OnPlayerLeftServer)
+        InitSpawners()
+        for (Index -> CollectibleCoinsIDX : CollectibleCoins):
+            spawn { CollectibleCoinsIDX.WaitForAgent(Index) } 
+        for (Index -> MutatorZonesRespawnIDX : MutatorZonesRespawn):
+            MutatorZonesRespawnIDX.AgentEntersEvent.Subscribe(InstantRespawn)
+        for (Index -> MutatorZonesRespawnHammerIDX : MutatorZonesRespawnHammer):
+            MutatorZonesRespawnHammerIDX.AgentEntersEvent.Subscribe(InstantRespawnHammer)
+        MutatorZoneTimerStart.AgentEntersEvent.Subscribe(StartTimer)
+        MutatorZonePreGameArea.AgentEntersEvent.Subscribe(StopTimer)
+        MutatorZoneEndArea.AgentEntersEvent.Subscribe(OnParkourCompleted)
+        TeleporterEndArea.EnterEvent.Subscribe(OnTeleportedEndGame)
+        for (Index -> ButtonDeviceSecret : ButtonDevicesSecret):
+            ButtonDeviceSecret.InteractedWithEvent.Subscribe(OnSecretFound)
+
+    InitSpawners():void=
+        Spawners := GetCreativeObjectsWithTag(spawner{})
+        for (Obj : Spawners):
+            if (Spawner := player_spawner_device[Obj]):
+                Spawner.SpawnedEvent.Subscribe(OnPlayerSpawned)
+
+    OnPlayerSpawned(Agent : agent):void=
+        if (Player := player[Agent]):
+            InitPlayer(Player)
+
+    InitPlayer(Player : player):void=
+        if:
+            Agent := agent[Player]
+            Fort := Agent.GetFortCharacter[]
+        then:
+            if (Existing := CustomPlayers[Player]):
+            else:
+                Fort.EliminatedEvent().Subscribe(OnPlayerEliminated)
+                CustomPlayer := custom_player{Player := Player}
+                CustomPlayer.Init()
+                if (set CustomPlayers[Player] = CustomPlayer) {}
+
+    OnPlayerEliminated(Result : elimination_result):void =
+        if:
+            Eliminated := Result.EliminatedCharacter
+            Agent := Eliminated.GetAgent[]
+            Player := player[Agent]
+            CustomPlayer := CustomPlayers[Player]
+        then:
+            InstantRespawn(Agent)
+
+    OnPlayerLeftServer(PlayerLeaving : player):void=
+        if (CustomPlayer := CustomPlayers[PlayerLeaving]):
+
+            # Remove the player from our map to free up memory
+            var NewCustomPlayerMap:[player]custom_player = map{}
+
+            for (Key -> Value : CustomPlayers, Key <> PlayerLeaving):
+                set NewCustomPlayerMap = ConcatenateMaps(NewCustomPlayerMap, map{Key => Value})
+
+            set CustomPlayers = NewCustomPlayerMap
+
+    (CollectibleCoinsIDX : collectible_object_device).WaitForAgent(Index : int)<suspends>:void=
+        loop:
+            MaybeAgent := CollectibleCoinsIDX.CollectedEvent.Await()
+            OnCoinCollected(MaybeAgent, Index)
+            Sleep(0.1)
+
+    OnCoinCollected(Agent : agent, Index : int):void=
+        AccoladesLevelCompleted.Award(Agent)
+        for (TrackerLevelsBeaten : TrackersLevelsBeaten):
+            TrackerLevelsBeaten.Increment(Agent)
+        if (PlayerCheckpointsIDX := PlayerCheckpoints[Index]):
+            PlayerCheckpointsIDX.Enable()
+            PlayerCheckpointsIDX.Register(Agent)
+            for (IDX -> PlayerCheckpoint : PlayerCheckpoints, IDX <> Index):
+                PlayerCheckpoint.Disable()
+        if (SwitchDeviceRespawnIDX := SwitchDevicesRespawn[Index]):
+            SwitchDeviceRespawnIDX.TurnOn(Agent)
+            for (IDX -> SwitchDevice : SwitchDevicesRespawn, IDX <> Index):
+                SwitchDevice.TurnOff(Agent)
+
+    InstantRespawn(Agent:agent):void=
+        AudioPlayerFall.Play(Agent)
+        for (Index -> SwitchDevicesRespawnIDX : SwitchDevicesRespawn):
+            if (SwitchDeviceRespawnIndex := SwitchDevicesRespawn[Index]):
+                if (SwitchDeviceRespawnIndex.GetCurrentState[Agent]):
+                    if (TeleportersRespawnIDX := TeleportersRespawn[Index]):
+                        TeleportersRespawnIDX.Teleport(Agent)
+
+    InstantRespawnHammer(Agent:agent):void=
+            AudioPlayerBonk.Play(Agent)
+            for (Index -> SwitchDevicesRespawnIDX : SwitchDevicesRespawn):
+                if (SwitchDeviceRespawnIndex := SwitchDevicesRespawn[Index]):
+                    if (SwitchDeviceRespawnIndex.GetCurrentState[Agent]):
+                        if (TeleportersRespawnIDX := TeleportersRespawn[Index]):
+                            TeleportersRespawnIDX.Teleport(Agent)
+
+    StartTimer(Agent : agent):void=
+        TimerGameStart.Start(Agent)
+        HudDeviceFalls.Show(Agent)
+
+    StopTimer(Agent : agent):void=
+        if:
+            Player := player[Agent]
+            CustomPlayer := CustomPlayers[Player]
+        then:    
+            TimerGameStart.Reset(Agent)
+            HudDeviceFalls.SetText(S2M("{0}"))
+            CustomPlayer.ResetFallValue(Agent)
+
+    OnParkourCompleted(Agent : agent):void=
+        AccoladesParkourCompleted.Award(Agent)
+        AudioPlayerParkourFinished.Play(Agent)
+        TimerGameStart.Pause(Agent)
+        for (VFXSpawnerEndGame : VFXSpawnersEndGame):
+            VFXSpawnerEndGame.Enable()
+        for (TrackerMapBeaten : TrackersMapBeaten):
+            TrackerMapBeaten.Increment(Agent)
+        for (IDX -> SwitchDeviceRespawn : SwitchDevicesRespawn):
+            if (SwitchDeviceRespawnStart := SwitchDevicesRespawn[0]):
+                SwitchDeviceRespawnStart.TurnOn(Agent)
+            else:
+                SwitchDeviceRespawn.TurnOff(Agent)
+        for (PlayerCheckpoint : PlayerCheckpoints):
+            PlayerCheckpoint.Disable()
+
+    OnTeleportedEndGame(Agent : agent):void=
+        TimerGameStart.Reset(Agent)
+        TrackerFalls.Reset(Agent)
+        for (VFXSpawnerEndGame : VFXSpawnersEndGame):
+            VFXSpawnerEndGame.Disable()
+
+    OnSecretFound(Agent : agent):void=
+        AudioPlayerSecretFound.Play(Agent)
+    
+
+                    
+
+
+
+
+
+
+
+
+
+
+
+
