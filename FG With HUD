@@ -125,14 +125,30 @@ game_manager := class(creative_device):
                 SwitchDevice.TurnOff(Agent)
 
     InstantRespawn(Agent:agent):void=
-        AudioPlayerFall.Play(Agent)
-        for (Index -> SwitchDevicesRespawnIDX : SwitchDevicesRespawn):
-            if (SwitchDeviceRespawnIndex := SwitchDevicesRespawn[Index]):
-                if (SwitchDeviceRespawnIndex.GetCurrentState[Agent]):
-                    if (TeleportersRespawnIDX := TeleportersRespawn[Index]):
-                        TeleportersRespawnIDX.Teleport(Agent)
+        if:
+            Player := player[Agent]
+            CustomPlayer := CustomPlayers[Player]
+        then:    
+            CustomPlayer.SetFallValue(Agent)
+            Print ("Fall Value Respawn set = {CustomPlayer.GetFallValue(Agent)}", ?Duration:=10.0)
+            HudDeviceFalls.SetText(S2M("{CustomPlayer.GetFallValue(Agent)}"))
+            HudDeviceFalls.Show(Agent)
+            AudioPlayerFall.Play(Agent)
+            for (Index -> SwitchDevicesRespawnIDX : SwitchDevicesRespawn):
+                if (SwitchDeviceRespawnIndex := SwitchDevicesRespawn[Index]):
+                    if (SwitchDeviceRespawnIndex.GetCurrentState[Agent]):
+                        if (TeleportersRespawnIDX := TeleportersRespawn[Index]):
+                            TeleportersRespawnIDX.Teleport(Agent)
 
     InstantRespawnHammer(Agent:agent):void=
+        if:
+            Player := player[Agent]
+            CustomPlayer := CustomPlayers[Player]
+        then:    
+            CustomPlayer.SetFallValue(Agent)
+            Print ("Fall Value Respawn set = {CustomPlayer.GetFallValue(Agent)}", ?Duration:=10.0)
+            HudDeviceFalls.SetText(S2M("{CustomPlayer.GetFallValue(Agent)}"))
+            HudDeviceFalls.Show(Agent)
             AudioPlayerBonk.Play(Agent)
             for (Index -> SwitchDevicesRespawnIDX : SwitchDevicesRespawn):
                 if (SwitchDeviceRespawnIndex := SwitchDevicesRespawn[Index]):
