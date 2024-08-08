@@ -1,0 +1,249 @@
+using { /Fortnite.com/Characters }
+using { /Fortnite.com/Devices }
+using { /Fortnite.com/Devices/CreativeAnimation }
+using { /Fortnite.com/Devices/CreativeAnimation/InterpolationTypes }
+using { /Verse.org/Simulation }
+using { /UnrealEngine.com/Temporary/Diagnostics }
+using { /UnrealEngine.com/Temporary/SpatialMath }
+
+turntable := class<concrete>():
+
+    @editable
+    CreativeProp : creative_prop = creative_prop {}
+
+turntable_slower := class<concrete>():
+
+    @editable
+    CreativeProp : creative_prop = creative_prop {}
+
+turntable_faster := class<concrete>():
+
+    @editable
+    CreativeProp : creative_prop = creative_prop {}
+
+turntables := class(creative_device):
+
+    @editable
+    Turntables : []turntable = array{}
+
+    @editable
+    TurntablesSlower : []turntable_slower = array{}
+
+    @editable
+    TurntablesFaster : []turntable_faster = array{}
+
+    # Runs when the device is started in a running game
+    OnBegin<override>()<suspends>:void=
+        for(Turntable : Turntables):
+            PlayAnim(Turntable)
+            Sleep(2.0)
+        for(TurntableFaster : TurntablesFaster):
+            PlayAnimFaster(TurntableFaster)
+            Sleep(2.0)
+        for(TurntableSlower : TurntablesSlower):
+            PlayAnimSlower(TurntableSlower)
+            Sleep(2.0)
+
+    PlayAnim(Turntable : turntable):void=
+        if (AController := Turntable.CreativeProp.GetAnimationController[]):
+            # Make an array of the keyframes
+            var Rotation : rotation = rotation{}
+            set Rotation = rotation{}.ApplyYaw(DegreesToRadians(90.0))
+
+            MovementKeyFrameStart: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, 200 cm in the X direction
+                DeltaLocation := vector3 { X:=0.0, Y:=0.0, Z:=0.0 }
+                # Rotate the object 90 degrees about the Z (Yaw)
+                DeltaRotation := Rotation
+                # Do not change scale
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                # Animate over 0.5 seconds
+                Time := 1.0
+                # Use EaseOut interpolation
+                Interpolation := Linear
+                }
+
+            MovementKeyFrameStartMid: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, 200 cm in the X direction
+                DeltaLocation := vector3 { X:=0.0, Y:=0.0, Z:=0.0 }
+                # Rotate the object 90 degrees about the Z (Yaw)
+                DeltaRotation := Rotation
+                # Do not change scale
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                # Animate over 0.5 seconds
+                Time := 1.0
+                # Use EaseOut interpolation
+                Interpolation := Linear
+                }
+
+            MovementKeyFrameEnd: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, 200 cm in the X direction
+                DeltaLocation := vector3 { X:=0.0, Y:=0.0, Z:=0.0 }
+                # Rotate the object 90 degrees about the Z (Yaw)
+                DeltaRotation := Rotation
+                # Do not change scale
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                # Animate over 0.5 seconds
+                Time := 1.0
+                # Use EaseOut interpolation
+                Interpolation := Linear
+                }
+
+            MovementKeyFrameEndMid: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, 200 cm in the X direction
+                DeltaLocation := vector3 { X:=0.0, Y:=0.0, Z:=0.0 }
+                # Rotate the object 90 degrees about the Z (Yaw)
+                DeltaRotation := Rotation
+                # Do not change scale
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                # Animate over 0.5 seconds
+                Time := 1.0
+                # Use EaseOut interpolation
+                Interpolation := Linear
+                }
+
+                FortVaderKeyFrames:[]keyframe_delta = array { MovementKeyFrameStart, MovementKeyFrameEndMid, MovementKeyFrameEnd, MovementKeyFrameStartMid }
+                # Set the animation to play
+                AController.SetAnimation(FortVaderKeyFrames, ?Mode:=animation_mode.Loop)
+                # Play the animation
+                AController.Play()
+
+    PlayAnimFaster(TurntableFaster : turntable_faster):void=
+        if (AController := TurntableFaster.CreativeProp.GetAnimationController[]):
+            # Make an array of the keyframes
+            var Rotation : rotation = rotation{}
+            set Rotation = rotation{}.ApplyYaw(DegreesToRadians(90.0))
+
+            MovementKeyFrameStart: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, 200 cm in the X direction
+                DeltaLocation := vector3 { X:=0.0, Y:=0.0, Z:=0.0 }
+                # Rotate the object 90 degrees about the Z (Yaw)
+                DeltaRotation := Rotation
+                # Do not change scale
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                # Animate over 0.5 seconds
+                Time := 0.5
+                # Use EaseOut interpolation
+                Interpolation := Linear
+                }
+
+            MovementKeyFrameStartMid: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, 200 cm in the X direction
+                DeltaLocation := vector3 { X:=0.0, Y:=0.0, Z:=0.0 }
+                # Rotate the object 90 degrees about the Z (Yaw)
+                DeltaRotation := Rotation
+                # Do not change scale
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                # Animate over 0.5 seconds
+                Time := 0.5
+                # Use EaseOut interpolation
+                Interpolation := Linear
+                }
+
+            MovementKeyFrameEnd: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, 200 cm in the X direction
+                DeltaLocation := vector3 { X:=0.0, Y:=0.0, Z:=0.0 }
+                # Rotate the object 90 degrees about the Z (Yaw)
+                DeltaRotation := Rotation
+                # Do not change scale
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                # Animate over 0.5 seconds
+                Time := 0.5
+                # Use EaseOut interpolation
+                Interpolation := Linear
+                }
+
+            MovementKeyFrameEndMid: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, 200 cm in the X direction
+                DeltaLocation := vector3 { X:=0.0, Y:=0.0, Z:=0.0 }
+                # Rotate the object 90 degrees about the Z (Yaw)
+                DeltaRotation := Rotation
+                # Do not change scale
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                # Animate over 0.5 seconds
+                Time := 0.5
+                # Use EaseOut interpolation
+                Interpolation := Linear
+                }
+
+                FortVaderKeyFrames:[]keyframe_delta = array { MovementKeyFrameStart, MovementKeyFrameEndMid, MovementKeyFrameEnd, MovementKeyFrameStartMid }
+                # Set the animation to play
+                AController.SetAnimation(FortVaderKeyFrames, ?Mode:=animation_mode.Loop)
+                # Play the animation
+                AController.Play()
+
+    PlayAnimSlower(TurntableSlower : turntable_slower):void=
+        if (AController := TurntableSlower.CreativeProp.GetAnimationController[]):
+            # Make an array of the keyframes
+            var Rotation : rotation = rotation{}
+            set Rotation = rotation{}.ApplyYaw(DegreesToRadians(90.0))
+
+            MovementKeyFrameStart: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, 200 cm in the X direction
+                DeltaLocation := vector3 { X:=0.0, Y:=0.0, Z:=0.0 }
+                # Rotate the object 90 degrees about the Z (Yaw)
+                DeltaRotation := Rotation
+                # Do not change scale
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                # Animate over 0.5 seconds
+                Time := 2.0
+                # Use EaseOut interpolation
+                Interpolation := Linear
+                }
+
+            MovementKeyFrameStartMid: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, 200 cm in the X direction
+                DeltaLocation := vector3 { X:=0.0, Y:=0.0, Z:=0.0 }
+                # Rotate the object 90 degrees about the Z (Yaw)
+                DeltaRotation := Rotation
+                # Do not change scale
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                # Animate over 0.5 seconds
+                Time := 2.0
+                # Use EaseOut interpolation
+                Interpolation := Linear
+                }
+
+            MovementKeyFrameEnd: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, 200 cm in the X direction
+                DeltaLocation := vector3 { X:=0.0, Y:=0.0, Z:=0.0 }
+                # Rotate the object 90 degrees about the Z (Yaw)
+                DeltaRotation := Rotation
+                # Do not change scale
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                # Animate over 0.5 seconds
+                Time := 2.0
+                # Use EaseOut interpolation
+                Interpolation := Linear
+                }
+
+            MovementKeyFrameEndMid: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, 200 cm in the X direction
+                DeltaLocation := vector3 { X:=0.0, Y:=0.0, Z:=0.0 }
+                # Rotate the object 90 degrees about the Z (Yaw)
+                DeltaRotation := Rotation
+                # Do not change scale
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                # Animate over 0.5 seconds
+                Time := 2.0
+                # Use EaseOut interpolation
+                Interpolation := Linear
+                }
+
+                FortVaderKeyFrames:[]keyframe_delta = array { MovementKeyFrameStart, MovementKeyFrameEndMid, MovementKeyFrameEnd, MovementKeyFrameStartMid }
+                # Set the animation to play
+                AController.SetAnimation(FortVaderKeyFrames, ?Mode:=animation_mode.Loop)
+                # Play the animation
+                AController.Play()
