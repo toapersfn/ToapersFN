@@ -1,0 +1,110 @@
+using { /Fortnite.com/Characters }
+using { /Fortnite.com/Devices }
+using { /Fortnite.com/Devices/CreativeAnimation }
+using { /Fortnite.com/Devices/CreativeAnimation/InterpolationTypes }
+using { /Verse.org/Simulation }
+using { /UnrealEngine.com/Temporary/Diagnostics }
+using { /UnrealEngine.com/Temporary/SpatialMath }
+
+hover_platform_vertical := class<concrete>():
+
+    @editable
+    CreativeProp : creative_prop = creative_prop {}
+
+hover_platform_horizontal := class<concrete>():
+
+    @editable
+    CreativeProp : creative_prop = creative_prop {}
+
+hover_platforms := class(creative_device):
+
+    @editable
+    HoverPlatformsVertical : []hover_platform_vertical = array{}
+
+    @editable
+    HoverPlatformsHorizontal : []hover_platform_horizontal = array{}
+
+    # Runs when the device is started in a running game
+    OnBegin<override>()<suspends>:void=
+        for(HoverPlatformVertical : HoverPlatformsVertical):
+            PlayAnimVertical(HoverPlatformVertical)
+            Sleep(1.0)
+        for(HoverPlatformHorizontal : HoverPlatformsHorizontal):
+            PlayAnimHorizontal(HoverPlatformHorizontal)
+            Sleep(2.0)            
+
+    PlayAnimVertical(HoverPlatformVertical : hover_platform_vertical):void=
+        if (AController := HoverPlatformVertical.CreativeProp.GetAnimationController[]):
+            # Make an array of the keyframes
+
+            MovementKeyFrameStart: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, 200 cm in the X direction
+                DeltaLocation := vector3 { X:=0.0, Y:=0.0, Z:=500.0 }
+                # Rotate the object 90 degrees about the Z (Yaw)
+                DeltaRotation := rotation{}
+                # Do not change scale
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                # Animate over 0.5 seconds
+                Time := 2.0
+                # Use EaseOut interpolation
+                Interpolation := Linear
+                }
+
+            MovementKeyFrameEnd: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, 200 cm in the X direction
+                DeltaLocation := vector3 { X:=0.0, Y:=0.0, Z:=-500.0 }
+                # Rotate the object 90 degrees about the Z (Yaw)
+                DeltaRotation := rotation{}
+                # Do not change scale
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                # Animate over 0.5 seconds
+                Time := 2.0
+                # Use EaseOut interpolation
+                Interpolation := Linear
+                }
+
+                FortVaderKeyFrames:[]keyframe_delta = array { MovementKeyFrameStart, MovementKeyFrameEnd }
+                # Set the animation to play
+                AController.SetAnimation(FortVaderKeyFrames, ?Mode:=animation_mode.Loop)
+                # Play the animation
+                AController.Play()
+
+    PlayAnimHorizontal(HoverPlatformHorizontal : hover_platform_horizontal):void=
+        if (AController := HoverPlatformHorizontal.CreativeProp.GetAnimationController[]):
+            # Make an array of the keyframes
+
+            MovementKeyFrameStart: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, 200 cm in the X direction
+                DeltaLocation := vector3 { X:=0.0, Y:=512.0, Z:=0.0 }
+                # Rotate the object 90 degrees about the Z (Yaw)
+                DeltaRotation := rotation{}
+                # Do not change scale
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                # Animate over 0.5 seconds
+                Time := 2.0
+                # Use EaseOut interpolation
+                Interpolation := Linear
+                }
+
+            MovementKeyFrameEnd: keyframe_delta = keyframe_delta
+            {
+                # Move our prop, 200 cm in the X direction
+                DeltaLocation := vector3 { X:=0.0, Y:=-512.0, Z:=0.0 }
+                # Rotate the object 90 degrees about the Z (Yaw)
+                DeltaRotation := rotation{}
+                # Do not change scale
+                DeltaScale := vector3 { X:=1.0, Y:=1.0, Z:=1.0 }
+                # Animate over 0.5 seconds
+                Time := 2.0
+                # Use EaseOut interpolation
+                Interpolation := Linear
+                }
+
+                FortVaderKeyFrames:[]keyframe_delta = array { MovementKeyFrameStart, MovementKeyFrameEnd }
+                # Set the animation to play
+                AController.SetAnimation(FortVaderKeyFrames, ?Mode:=animation_mode.Loop)
+                # Play the animation
+                AController.Play()
